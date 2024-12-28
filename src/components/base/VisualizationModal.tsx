@@ -28,6 +28,7 @@ export interface VisualizationModalProps<T extends BaseVisualizationProps> {
   state: T['state'];
   config: T['config'];
   handlers: T['handlers'];
+  onControlPress?: (event: GestureResponderEvent) => void;
   children: React.ReactNode;
 }
 
@@ -40,12 +41,12 @@ function VisualizationModal<T extends BaseVisualizationProps>({
   state,
   config,
   handlers,
+  onControlPress,
   children
 }: VisualizationModalProps<T>) {
-  // Calculate dimensions accounting for safe area and status bar
   const modalHeight = Platform.OS === 'ios' ? 
     SCREEN_HEIGHT : 
-    SCREEN_HEIGHT - StatusBar.currentHeight!;
+    SCREEN_HEIGHT - (StatusBar.currentHeight || 0);
 
   return (
     <Modal
@@ -55,9 +56,13 @@ function VisualizationModal<T extends BaseVisualizationProps>({
       onRequestClose={onClose}
     >
       <SafeAreaView style={styles.container} edges={['top']}>
-        {/* Header */}
+        {/* Header with Close Button */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <TouchableOpacity 
+            onPress={onClose} 
+            style={styles.closeButton}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -66,13 +71,14 @@ function VisualizationModal<T extends BaseVisualizationProps>({
         <View style={styles.visualizationContainer}>
           <BaseVisualizationContainer<T>
             width={SCREEN_WIDTH}
-            height={modalHeight - 150}
+            height={modalHeight * 0.7}
             data={data}
             state={state}
             config={config}
             handlers={handlers}
             onPress={onPress}
             onMove={onMove}
+            onControlPress={onControlPress}
           >
             {children}
           </BaseVisualizationContainer>
@@ -88,17 +94,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    height: 56,
+    height: '8%',
+    minHeight: 44,
+    width: '100%',
     flexDirection: 'row',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: '4%',
     backgroundColor: colors.surface,
   },
   closeButton: {
     padding: spacing.sm,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: 20,
   },
   visualizationContainer: {
     flex: 1,
+    width: '100%',
   },
 });
 

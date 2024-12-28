@@ -42,40 +42,63 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
     };
   }, [width, height, data]);
 
+  const gridLines = useMemo(() => {
+    const lines = [];
+    const gridCount = 10;
+    const adjustedWidth = width - (PADDING * 2);
+    const adjustedHeight = height - (PADDING * 2);
+
+    for (let i = 0; i <= gridCount; i++) {
+      const x = PADDING + (adjustedWidth * i) / gridCount;
+      const y = PADDING + (adjustedHeight * i) / gridCount;
+
+      // Horizontal lines
+      lines.push(
+        <Line
+          key={`h${i}`}
+          x1={PADDING}
+          y1={y}
+          x2={width - PADDING}
+          y2={y}
+          stroke={colors.text}
+          strokeWidth={0.5}
+          opacity={0.1}
+        />
+      );
+
+      // Vertical lines
+      lines.push(
+        <Line
+          key={`v${i}`}
+          x1={x}
+          y1={PADDING}
+          x2={x}
+          y2={height - PADDING}
+          stroke={colors.text}
+          strokeWidth={0.5}
+          opacity={0.1}
+        />
+      );
+    }
+
+    return lines;
+  }, [width, height]);
+
   return (
     <G>
-      {/* Touch area that exactly matches the graph area */}
+      {/* Background */}
       <Rect
         x={PADDING}
         y={PADDING}
-        width={width - 2 * PADDING}
-        height={height - 2 * PADDING}
-        fill="transparent"
+        width={width - (PADDING * 2)}
+        height={height - (PADDING * 2)}
+        fill={colors.surface}
+        stroke={colors.textSecondary}
+        strokeWidth={1}
       />
 
       {/* Grid */}
-      <G opacity={0.1}>
-        {Array.from({ length: 10 }).map((_, i) => (
-          <React.Fragment key={i}>
-            <Line
-              x1={PADDING}
-              y1={PADDING + ((height - 2 * PADDING) * i) / 9}
-              x2={width - PADDING}
-              y2={PADDING + ((height - 2 * PADDING) * i) / 9}
-              stroke={colors.text}
-              strokeWidth={1}
-            />
-            <Line
-              x1={PADDING + ((width - 2 * PADDING) * i) / 9}
-              y1={PADDING}
-              x2={PADDING + ((width - 2 * PADDING) * i) / 9}
-              y2={height - PADDING}
-              stroke={colors.text}
-              strokeWidth={1}
-            />
-          </React.Fragment>
-        ))}
-      </G>
+      {gridLines}
 
       {/* Data points */}
       {data.map((point, i) => {
@@ -85,9 +108,9 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
             key={i}
             cx={scaledPoint.x}
             cy={scaledPoint.y}
-            r={4}
+            r={8}
             fill={colors.primary}
-            opacity={0.6}
+            opacity={0.8}
           />
         );
       })}
@@ -100,7 +123,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
             return `${scaledPoint.x},${scaledPoint.y}`;
           }).join(' L ')}`}
           stroke={colors.text}
-          strokeWidth={2}
+          strokeWidth={3}
           fill="none"
         />
       )}
@@ -112,7 +135,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
         x2={width - PADDING}
         y2={height - PADDING}
         stroke={colors.textSecondary}
-        strokeWidth={1}
+        strokeWidth={2}
       />
       <Line
         x1={PADDING}
@@ -120,7 +143,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
         x2={PADDING}
         y2={height - PADDING}
         stroke={colors.textSecondary}
-        strokeWidth={1}
+        strokeWidth={2}
       />
     </G>
   );

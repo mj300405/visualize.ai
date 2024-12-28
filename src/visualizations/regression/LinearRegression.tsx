@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, GestureResponderEvent } from 'react-native';
 import { DataPoint, Parameter, AlgorithmConfig, RegressionVisualizationProps } from '../../types/visualization';
-import { colors } from '../../theme';
+import { colors, spacing } from '../../theme';
 import RegressionVisualization from './RegressionVisualization';
 import InteractiveVisualization from '../../components/base/InteractiveVisualization';
 
@@ -45,7 +45,7 @@ const config: AlgorithmConfig = {
   parameters: defaultParameters,
 };
 
-const PADDING = 40; // Make sure this matches the padding in RegressionVisualization
+const PADDING = 40;
 
 const LinearRegression: React.FC = () => {
   const [data, setData] = useState<DataPoint[]>([]);
@@ -55,13 +55,11 @@ const LinearRegression: React.FC = () => {
   const [speed, setSpeed] = useState(1);
   const [parameters, setParameters] = useState(defaultParameters);
 
-  // Convert screen coordinates to data coordinates
-  const convertToDataPoint = (event: GestureResponderEvent) => {
+  const convertToDataPoint = useCallback((event: GestureResponderEvent) => {
     const { locationX, locationY } = event.nativeEvent;
-    const width = SCREEN_WIDTH - 32;
-    const height = 300;
+    const width = SCREEN_WIDTH - (spacing.md * 4);
+    const height = width * 0.75;
 
-    // Only add points within the graph area
     if (
       locationX < PADDING || 
       locationX > width - PADDING || 
@@ -71,27 +69,23 @@ const LinearRegression: React.FC = () => {
       return null;
     }
 
-    // Scale the coordinates to match the graph's coordinate system
     const x = ((locationX - PADDING) / (width - 2 * PADDING)) * 10 - 5;
     const y = 5 - ((locationY - PADDING) / (height - 2 * PADDING)) * 10;
 
     return { x, y };
-  };
+  }, []);
 
-  // Handlers
   const handleInteraction = useCallback((event: GestureResponderEvent) => {
     const point = convertToDataPoint(event);
     if (point) {
-      console.log('Adding new point:', point);
       setData(prevData => [...prevData, point]);
       if (isPlaying) {
         setWeights({ m: 0, b: 0 });
         setCurrentStep(0);
       }
     }
-  }, [isPlaying]);
+  }, [isPlaying, convertToDataPoint]);
 
-  // Handlers for continuous drawing
   const handleDrawMove = useCallback((event: GestureResponderEvent) => {
     handleInteraction(event);
   }, [handleInteraction]);
@@ -107,7 +101,6 @@ const LinearRegression: React.FC = () => {
     ];
   }, [weights, data]);
 
-  // Gradient descent step
   const gradientDescentStep = useCallback(() => {
     if (data.length === 0) return;
     
@@ -155,14 +148,17 @@ const LinearRegression: React.FC = () => {
     onSpeedChange: (newSpeed: number) => setSpeed(newSpeed),
     onParameterChange: (parameterId: string, value: any) => {
       setParameters(prev =>
-        prev.map(p => (p.id === parameterId ? { ...p, value } : p))
+        prev.map(p => p.id === parameterId ? { ...p, value } : p)
       );
-      handlers.onReset();
+      // Reset the visualization when parameters change
+      setWeights({ m: 0, b: 0 });
+      setCurrentStep(0);
+      setIsPlaying(false);
     },
   };
 
   // Animation effect
-  React.useEffect(() => {
+  useEffect(() => {
     if (isPlaying && data.length > 0) {
       const intervalId = setInterval(() => {
         gradientDescentStep();
@@ -172,11 +168,14 @@ const LinearRegression: React.FC = () => {
     }
   }, [isPlaying, gradientDescentStep, speed, data]);
 
+  const visualizationWidth = SCREEN_WIDTH - (spacing.md * 4);
+  const visualizationHeight = visualizationWidth * 0.75;
+
   return (
     <View style={styles.container}>
       <InteractiveVisualization<RegressionVisualizationProps>
-        width={SCREEN_WIDTH - 32}
-        height={300}
+        width={visualizationWidth}
+        height={visualizationHeight}
         data={data}
         state={{
           isPlaying,
@@ -184,14 +183,17 @@ const LinearRegression: React.FC = () => {
           totalSteps: parameters.find(p => p.id === 'iterations')?.value || 100,
           speed,
         }}
-        config={config}
+        config={{
+          ...config,
+          parameters: parameters,
+        }}
         handlers={handlers}
         onInteraction={handleInteraction}
         onMove={handleDrawMove}
       >
         <RegressionVisualization
-          width={SCREEN_WIDTH - 32}
-          height={300}
+          width={visualizationWidth}
+          height={visualizationHeight}
           data={data}
           predictionLine={getPredictionLine()}
           state={{
@@ -200,7 +202,10 @@ const LinearRegression: React.FC = () => {
             totalSteps: parameters.find(p => p.id === 'iterations')?.value || 100,
             speed,
           }}
-          config={config}
+          config={{
+            ...config,
+            parameters: parameters,
+          }}
           handlers={handlers}
         />
       </InteractiveVisualization>

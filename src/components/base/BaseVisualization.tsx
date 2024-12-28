@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, GestureResponderEvent, PanResponder } from 'react-native';
+import { View, StyleSheet, GestureResponderEvent, ScrollView } from 'react-native';
 import Svg from 'react-native-svg';
 import { BaseVisualizationProps } from '../../types/visualization';
 import { colors, spacing } from '../../theme';
-import ControlPanel from './ControlPanle';
+import ControlPanel from './ControlPanel';
 import ParameterControls from './ParameterControls';
 
 export interface BaseVisualizationContainerProps<T extends BaseVisualizationProps> {
@@ -15,6 +15,7 @@ export interface BaseVisualizationContainerProps<T extends BaseVisualizationProp
   handlers: T['handlers'];
   onPress?: (event: GestureResponderEvent) => void;
   onMove?: (event: GestureResponderEvent) => void;
+  onControlPress?: (event: GestureResponderEvent) => void;
   children: React.ReactNode;
 }
 
@@ -26,34 +27,34 @@ export const BaseVisualizationContainer = <T extends BaseVisualizationProps>({
   handlers,
   onPress,
   onMove,
+  onControlPress,
   children
 }: BaseVisualizationContainerProps<T>) => {
-  const panResponder = React.useMemo(
-    () =>
-      PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onMoveShouldSetPanResponder: () => true,
-        onPanResponderStart: onPress,
-        onPanResponderMove: onMove,
-      }),
-    [onPress, onMove]
-  );
-
   return (
-    <View style={styles.container}>
+    <ScrollView 
+      style={styles.container} 
+      bounces={false}
+      contentContainerStyle={styles.contentContainer}
+    >
       {/* Main visualization area */}
-      <View 
-        style={[styles.visualizationContainer, { width, height }]}
-        {...panResponder.panHandlers}
-      >
-        <View style={{ width, height }}>
-          <Svg width={width} height={height}>
+      <View style={styles.visualizationContainer}>
+        <View 
+          style={[styles.svgWrapper, { height }]}
+          onTouchStart={onPress}
+          onTouchMove={onMove}
+        >
+          <Svg 
+            width="100%" 
+            height="100%" 
+            viewBox={`0 0 ${width} ${height}`} 
+            preserveAspectRatio="xMidYMid meet"
+          >
             {children}
           </Svg>
         </View>
       </View>
 
-      {/* Controls */}
+      {/* Controls Section */}
       <View style={styles.controlsContainer}>
         <ControlPanel
           state={state}
@@ -63,14 +64,22 @@ export const BaseVisualizationContainer = <T extends BaseVisualizationProps>({
 
         {/* Parameters */}
         {config?.parameters && (
-          <ParameterControls
-            parameters={config.parameters}
-            onParameterChange={handlers.onParameterChange}
-            style={styles.parameters}
-          />
+          <View style={styles.parametersWrapper}>
+            <ScrollView 
+              style={styles.parametersScroll}
+              onTouchStart={onControlPress}
+              onTouchMove={onControlPress}
+            >
+              <ParameterControls
+                parameters={config.parameters}
+                onParameterChange={handlers.onParameterChange}
+                style={styles.parameters}
+              />
+            </ScrollView>
+          </View>
         )}
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -79,17 +88,30 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  contentContainer: {
+    paddingBottom: spacing.xl,
+  },
   visualizationContainer: {
     backgroundColor: colors.surface,
     borderRadius: 12,
-    overflow: 'hidden',
     margin: spacing.md,
+    padding: spacing.md,
+    overflow: 'hidden',
+  },
+  svgWrapper: {
+    width: '100%',
   },
   controlsContainer: {
-    paddingHorizontal: spacing.md,
+    marginHorizontal: spacing.md,
   },
   controls: {
     marginBottom: spacing.md,
+  },
+  parametersWrapper: {
+    maxHeight: 300,
+  },
+  parametersScroll: {
+    flex: 1,
   },
   parameters: {
     marginBottom: spacing.md,
