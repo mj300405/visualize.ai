@@ -75,18 +75,32 @@ const LinearRegression: React.FC = () => {
     return { x, y };
   }, []);
 
+  const MIN_DRAW_INTERVAL = 50; // Minimum time between points in milliseconds
+  let lastDrawTime = 0;
+  
   const handleInteraction = useCallback((event: GestureResponderEvent) => {
+    const currentTime = Date.now();
+    if (currentTime - lastDrawTime < MIN_DRAW_INTERVAL) {
+      return; // Skip if not enough time has passed
+    }
+    
     const point = convertToDataPoint(event);
     if (point) {
+      console.log('Adding new point:', point);
       setData(prevData => [...prevData, point]);
       if (isPlaying) {
         setWeights({ m: 0, b: 0 });
         setCurrentStep(0);
       }
+      lastDrawTime = currentTime;
     }
   }, [isPlaying, convertToDataPoint]);
-
+  
   const handleDrawMove = useCallback((event: GestureResponderEvent) => {
+    const currentTime = Date.now();
+    if (currentTime - lastDrawTime < MIN_DRAW_INTERVAL) {
+      return; // Skip if not enough time has passed
+    }
     handleInteraction(event);
   }, [handleInteraction]);
 

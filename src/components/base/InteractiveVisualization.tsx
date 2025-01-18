@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, GestureResponderEvent, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, GestureResponderEvent } from 'react-native';
 import { colors, spacing, typography } from '../../theme';
 import { BaseVisualizationProps } from '../../types/visualization';
 import BaseVisualizationContainer from './BaseVisualization';
 import VisualizationModal from './VisualizationModal';
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface InteractiveVisualizationProps<T extends BaseVisualizationProps> {
   width: number;
@@ -32,53 +30,40 @@ function InteractiveVisualization<T extends BaseVisualizationProps>({
 }: InteractiveVisualizationProps<T>) {
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Handler to prevent event propagation for controls
-  const handleControlPress = (event: GestureResponderEvent) => {
-    event.stopPropagation();
-  };
-
-  const handleModalClose = () => {
-    setModalVisible(false);
-  };
-
   return (
     <View style={styles.container}>
       {/* Preview Visualization */}
-      <View style={styles.previewContainer}>
-        <TouchableOpacity 
-          style={styles.previewTouchable}
-          onPress={() => setModalVisible(true)}
+      <TouchableOpacity 
+        style={styles.previewContainer}
+        onPress={() => setModalVisible(true)}
+      >
+        <BaseVisualizationContainer<T>
+          height={height}
+          width={width}
+          data={data}
+          state={state}
+          config={config}
+          handlers={handlers}
         >
-          <BaseVisualizationContainer<T>
-            height={height}
-            width={width}
-            data={data}
-            state={state}
-            config={config}
-            handlers={handlers}
-            onControlPress={handleControlPress}
-          >
-            {children}
-          </BaseVisualizationContainer>
-          <View style={styles.overlay}>
-            <Text style={styles.overlayText}>Tap to interact</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
+          {children}
+        </BaseVisualizationContainer>
+        <View style={styles.overlay}>
+          <Text style={styles.overlayText}>Tap to interact</Text>
+        </View>
+      </TouchableOpacity>
 
       {/* Full-screen Modal */}
       <VisualizationModal<T>
         visible={modalVisible}
-        onClose={handleModalClose}
+        onClose={() => setModalVisible(false)}
         onPress={onInteraction}
         onMove={onMove}
-        width={SCREEN_WIDTH}
+        width={width}
         height={height}
         data={data}
         state={state}
         config={config}
         handlers={handlers}
-        onControlPress={handleControlPress}
       >
         {children}
       </VisualizationModal>
@@ -89,17 +74,9 @@ function InteractiveVisualization<T extends BaseVisualizationProps>({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%',
   },
   previewContainer: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    marginBottom: '3%',
-  },
-  previewTouchable: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+    position: 'relative',
   },
   overlay: {
     position: 'absolute',

@@ -3,7 +3,7 @@ import { G, Circle, Path, Line, Rect } from 'react-native-svg';
 import { RegressionVisualizationProps } from '../../types/visualization';
 import { colors } from '../../theme';
 
-const PADDING = 40;
+const PADDING = 20; // Reduced padding to make graph larger
 
 const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
   width,
@@ -62,7 +62,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
           y2={y}
           stroke={colors.text}
           strokeWidth={0.5}
-          opacity={0.1}
+          opacity={0.2}
         />
       );
 
@@ -76,7 +76,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
           y2={height - PADDING}
           stroke={colors.text}
           strokeWidth={0.5}
-          opacity={0.1}
+          opacity={0.2}
         />
       );
     }
@@ -88,13 +88,11 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
     <G>
       {/* Background */}
       <Rect
-        x={PADDING}
-        y={PADDING}
-        width={width - (PADDING * 2)}
-        height={height - (PADDING * 2)}
+        x={0}
+        y={0}
+        width={width}
+        height={height}
         fill={colors.surface}
-        stroke={colors.textSecondary}
-        strokeWidth={1}
       />
 
       {/* Grid */}
@@ -108,7 +106,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
             key={i}
             cx={scaledPoint.x}
             cy={scaledPoint.y}
-            r={8}
+            r={6}
             fill={colors.primary}
             opacity={0.8}
           />
@@ -123,7 +121,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
             return `${scaledPoint.x},${scaledPoint.y}`;
           }).join(' L ')}`}
           stroke={colors.text}
-          strokeWidth={3}
+          strokeWidth={2}
           fill="none"
         />
       )}

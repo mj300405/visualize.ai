@@ -7,10 +7,10 @@ import {
   Dimensions,
   Platform,
   StatusBar,
-  GestureResponderEvent
+  GestureResponderEvent,
+  SafeAreaView
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing } from '../../theme';
 import { BaseVisualizationProps } from '../../types/visualization';
 import BaseVisualizationContainer from './BaseVisualization';
@@ -54,24 +54,23 @@ function VisualizationModal<T extends BaseVisualizationProps>({
       transparent={false}
       visible={visible}
       onRequestClose={onClose}
+      statusBarTranslucent
     >
-      <SafeAreaView style={styles.container} edges={['top']}>
-        {/* Header with Close Button */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            onPress={onClose} 
-            style={styles.closeButton}
-            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-          >
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
-        </View>
+      <View style={styles.container}>
+        {/* Close Button */}
+        <TouchableOpacity 
+          style={styles.closeButton}
+          onPress={onClose}
+          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+        >
+          <Ionicons name="close" size={28} color={colors.text} />
+        </TouchableOpacity>
 
         {/* Visualization Container */}
-        <View style={styles.visualizationContainer}>
+        <View style={styles.visualizationWrapper}>
           <BaseVisualizationContainer<T>
-            width={SCREEN_WIDTH}
-            height={modalHeight * 0.7}
+            width={SCREEN_WIDTH - spacing.md * 2}
+            height={modalHeight * 0.6}
             data={data}
             state={state}
             config={config}
@@ -83,7 +82,7 @@ function VisualizationModal<T extends BaseVisualizationProps>({
             {children}
           </BaseVisualizationContainer>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
@@ -92,25 +91,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    height: '8%',
-    minHeight: 44,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingHorizontal: '4%',
-    backgroundColor: colors.surface,
+    paddingTop: Platform.OS === 'ios' ? 40 : StatusBar.currentHeight,
   },
   closeButton: {
-    padding: spacing.sm,
-    backgroundColor: colors.surfaceAlt,
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : StatusBar.currentHeight! + 10,
+    right: spacing.md,
+    zIndex: 100,
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  visualizationContainer: {
+  visualizationWrapper: {
     flex: 1,
-    width: '100%',
+    marginTop: 60,
   },
 });
 
