@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, StyleSheet, GestureResponderEvent, ScrollView } from 'react-native';
 import Svg from 'react-native-svg';
 import { BaseVisualizationProps } from '../../types/visualization';
@@ -30,18 +30,36 @@ export const BaseVisualizationContainer = <T extends BaseVisualizationProps>({
   onControlPress,
   children
 }: BaseVisualizationContainerProps<T>) => {
+  const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const handleTouchStart = (event: GestureResponderEvent) => {
+    setScrollEnabled(false);
+    onPress?.(event);
+  };
+
+  const handleTouchEnd = () => {
+    setScrollEnabled(true);
+  };
+
+  const handleTouchMove = (event: GestureResponderEvent) => {
+    onMove?.(event);
+  };
+
   return (
     <ScrollView 
       style={styles.container} 
       bounces={false}
       contentContainerStyle={styles.contentContainer}
+      scrollEnabled={scrollEnabled}
     >
       {/* Main visualization area */}
       <View style={styles.visualizationContainer}>
         <View 
           style={[styles.svgWrapper, { height }]}
-          onTouchStart={onPress}
-          onTouchMove={onMove}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         >
           <Svg 
             width="100%" 
@@ -63,19 +81,13 @@ export const BaseVisualizationContainer = <T extends BaseVisualizationProps>({
         />
 
         {/* Parameters */}
-        {config?.parameters && (
+        {config?.parameters && config.parameters.length > 0 && (
           <View style={styles.parametersWrapper}>
-            <ScrollView 
-              style={styles.parametersScroll}
-              onTouchStart={onControlPress}
-              onTouchMove={onControlPress}
-            >
-              <ParameterControls
-                parameters={config.parameters}
-                onParameterChange={handlers.onParameterChange}
-                style={styles.parameters}
-              />
-            </ScrollView>
+            <ParameterControls
+              parameters={config.parameters}
+              onParameterChange={handlers.onParameterChange}
+              style={styles.parameters}
+            />
           </View>
         )}
       </View>
@@ -94,27 +106,32 @@ const styles = StyleSheet.create({
   visualizationContainer: {
     backgroundColor: colors.surface,
     borderRadius: 12,
-    margin: spacing.md,
-    padding: spacing.md,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.md,
     overflow: 'hidden',
   },
   svgWrapper: {
     width: '100%',
+    height: '100%',
   },
   controlsContainer: {
     marginHorizontal: spacing.md,
+    marginTop: spacing.md,
   },
   controls: {
     marginBottom: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    padding: spacing.md,
   },
   parametersWrapper: {
-    maxHeight: 300,
-  },
-  parametersScroll: {
-    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: spacing.md,
   },
   parameters: {
-    marginBottom: spacing.md,
+    padding: spacing.md,
   },
 });
 

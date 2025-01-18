@@ -3,7 +3,7 @@ import { G, Circle, Path, Line, Rect } from 'react-native-svg';
 import { RegressionVisualizationProps } from '../../types/visualization';
 import { colors } from '../../theme';
 
-const PADDING = 20; // Reduced padding to make graph larger
+const PADDING = 10; // Reduced padding to use more space
 
 const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
   width,
@@ -15,39 +15,27 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
   handlers,
 }) => {
   const scalePoint = useMemo(() => {
-    const defaultRange = { min: -5, max: 5 };
+    const range = { min: -5, max: 5 }; // Fixed range for consistent scale
     
-    const xMin = data.length ? Math.min(...data.map(d => d.x)) : defaultRange.min;
-    const xMax = data.length ? Math.max(...data.map(d => d.x)) : defaultRange.max;
-    const yMin = data.length ? Math.min(...data.map(d => d.y)) : defaultRange.min;
-    const yMax = data.length ? Math.max(...data.map(d => d.y)) : defaultRange.max;
-
-    const xRange = Math.max(xMax - xMin, 1);
-    const yRange = Math.max(yMax - yMin, 1);
-    
-    const paddedXMin = xMin - xRange * 0.1;
-    const paddedXMax = xMax + xRange * 0.1;
-    const paddedYMin = yMin - yRange * 0.1;
-    const paddedYMax = yMax + yRange * 0.1;
-
     return {
       toSvg: (point: { x: number, y: number }) => ({
-        x: ((point.x - paddedXMin) / (paddedXMax - paddedXMin)) * (width - 2 * PADDING) + PADDING,
-        y: ((paddedYMax - point.y) / (paddedYMax - paddedYMin)) * (height - 2 * PADDING) + PADDING
+        x: ((point.x - range.min) / (range.max - range.min)) * (width - 2 * PADDING) + PADDING,
+        y: ((range.max - point.y) / (range.max - range.min)) * (height - 2 * PADDING) + PADDING
       }),
       toData: (svgX: number, svgY: number) => ({
-        x: ((svgX - PADDING) / (width - 2 * PADDING)) * (paddedXMax - paddedXMin) + paddedXMin,
-        y: paddedYMax - (((svgY - PADDING) / (height - 2 * PADDING)) * (paddedYMax - paddedYMin))
+        x: ((svgX - PADDING) / (width - 2 * PADDING)) * (range.max - range.min) + range.min,
+        y: range.max - (((svgY - PADDING) / (height - 2 * PADDING)) * (range.max - range.min))
       })
     };
-  }, [width, height, data]);
+  }, [width, height]);
 
   const gridLines = useMemo(() => {
     const lines = [];
     const gridCount = 10;
-    const adjustedWidth = width - (PADDING * 2);
-    const adjustedHeight = height - (PADDING * 2);
+    const adjustedWidth = width - (2 * PADDING);
+    const adjustedHeight = height - (2 * PADDING);
 
+    // Draw more frequent grid lines
     for (let i = 0; i <= gridCount; i++) {
       const x = PADDING + (adjustedWidth * i) / gridCount;
       const y = PADDING + (adjustedHeight * i) / gridCount;
@@ -93,6 +81,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
         width={width}
         height={height}
         fill={colors.surface}
+        rx={12}
       />
 
       {/* Grid */}
@@ -106,7 +95,7 @@ const RegressionVisualization: React.FC<RegressionVisualizationProps> = ({
             key={i}
             cx={scaledPoint.x}
             cy={scaledPoint.y}
-            r={6}
+            r={4}
             fill={colors.primary}
             opacity={0.8}
           />

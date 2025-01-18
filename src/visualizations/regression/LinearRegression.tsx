@@ -32,7 +32,7 @@ const defaultParameters: Parameter[] = [
     type: 'range',
     value: 0.5,
     min: 0,
-    max: 2,
+    max: 5,
     step: 0.1,
   }
 ];
@@ -45,7 +45,12 @@ const config: AlgorithmConfig = {
   parameters: defaultParameters,
 };
 
-const PADDING = 40;
+const PADDING = 20;
+const SCALE = {
+  min: -5,
+  max: 5,
+  range: 10 // max - min
+};
 
 const LinearRegression: React.FC = () => {
   const [data, setData] = useState<DataPoint[]>([]);
@@ -57,44 +62,56 @@ const LinearRegression: React.FC = () => {
 
   const convertToDataPoint = useCallback((event: GestureResponderEvent) => {
     const { locationX, locationY } = event.nativeEvent;
-    const width = SCREEN_WIDTH - (spacing.md * 4);
-    const height = width * 0.75;
 
+    // Validate boundaries including padding
     if (
       locationX < PADDING || 
-      locationX > width - PADDING || 
+      locationX > visualizationWidth - PADDING || 
       locationY < PADDING || 
-      locationY > height - PADDING
+      locationY > visualizationHeight - PADDING
     ) {
       return null;
     }
 
-    const x = ((locationX - PADDING) / (width - 2 * PADDING)) * 10 - 5;
-    const y = 5 - ((locationY - PADDING) / (height - 2 * PADDING)) * 10;
+    // Convert to data point using the same scale as RegressionVisualization
+    const x = SCALE.min + ((locationX - PADDING) / (visualizationWidth - 2 * PADDING)) * SCALE.range;
+    const y = SCALE.max - ((locationY - PADDING) / (visualizationHeight - 2 * PADDING)) * SCALE.range;
 
     return { x, y };
   }, []);
 
-  const MIN_DRAW_INTERVAL = 50; // Minimum time between points in milliseconds
+  const MIN_DRAW_INTERVAL = 100; // Minimum time between points in milliseconds
   let lastDrawTime = 0;
   
   const handleInteraction = useCallback((event: GestureResponderEvent) => {
     const currentTime = Date.now();
     if (currentTime - lastDrawTime < MIN_DRAW_INTERVAL) {
-      return; // Skip if not enough time has passed
+      return;
     }
     
     const point = convertToDataPoint(event);
     if (point) {
-      console.log('Adding new point:', point);
-      setData(prevData => [...prevData, point]);
-      if (isPlaying) {
-        setWeights({ m: 0, b: 0 });
-        setCurrentStep(0);
+      // Get current noise value from parameters
+      const noiseLevel = parameters.find(p => p.id === 'noise')?.value || 0.5;
+      
+      // Add random noise to y coordinate
+      const noise = (Math.random() - 0.5) * noiseLevel;
+      const noisyPoint = {
+        x: point.x,
+        y: point.y + noise  // Add noise to y coordinate
+      };
+  
+      if (Math.abs(noisyPoint.x) <= 5 && Math.abs(noisyPoint.y) <= 5) {
+        setData(prevData => [...prevData, noisyPoint]);
+        if (isPlaying) {
+          setWeights({ m: 0, b: 0 });
+          setCurrentStep(0);
+        }
       }
       lastDrawTime = currentTime;
     }
-  }, [isPlaying, convertToDataPoint]);
+  }, [isPlaying, convertToDataPoint, parameters]);  // Added parameters to dependencies
+
   
   const handleDrawMove = useCallback((event: GestureResponderEvent) => {
     const currentTime = Date.now();
@@ -182,8 +199,8 @@ const LinearRegression: React.FC = () => {
     }
   }, [isPlaying, gradientDescentStep, speed, data]);
 
-  const visualizationWidth = SCREEN_WIDTH - (spacing.md * 4);
-  const visualizationHeight = visualizationWidth * 0.75;
+  const visualizationWidth = SCREEN_WIDTH - (spacing.md * 2);
+  const visualizationHeight = visualizationWidth * 1.4;
 
   return (
     <View style={styles.container}>

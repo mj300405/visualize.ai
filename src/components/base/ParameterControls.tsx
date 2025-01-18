@@ -5,8 +5,6 @@ import {
   StyleSheet,
   Switch,
   TouchableOpacity,
-  ScrollView,
-  GestureResponderEvent,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { Parameter } from '../../types/visualization';
@@ -23,9 +21,6 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
   onParameterChange,
   style,
 }) => {
-  const handlePress = (event: GestureResponderEvent) => {
-    event.stopPropagation();
-  };
 
   const handleValueChange = (parameterId: string, value: any) => {
     onParameterChange(parameterId, value);
@@ -35,12 +30,7 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
     switch (param.type) {
       case 'range':
         return (
-          <View 
-            key={param.id} 
-            style={styles.parameterContainer}
-            onTouchStart={handlePress}
-            onTouchMove={handlePress}
-          >
+          <View key={param.id} style={styles.parameterContainer}>
             <View style={styles.parameterHeader}>
               <Text style={styles.parameterName}>{param.name}</Text>
               <Text style={styles.parameterValue}>
@@ -63,12 +53,7 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
 
       case 'select':
         return (
-          <View 
-            key={param.id} 
-            style={styles.parameterContainer}
-            onTouchStart={handlePress}
-            onTouchMove={handlePress}
-          >
+          <View key={param.id} style={styles.parameterContainer}>
             <Text style={styles.parameterName}>{param.name}</Text>
             <View style={styles.selectContainer}>
               {param.options?.map((option) => (
@@ -78,10 +63,7 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
                     styles.selectOption,
                     param.value === option.value && styles.selectOptionSelected,
                   ]}
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleValueChange(param.id, option.value);
-                  }}
+                  onPress={() => handleValueChange(param.id, option.value)}
                 >
                   <Text
                     style={[
@@ -99,12 +81,7 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
 
       case 'checkbox':
         return (
-          <View 
-            key={param.id} 
-            style={styles.parameterContainer}
-            onTouchStart={handlePress}
-            onTouchMove={handlePress}
-          >
+          <View key={param.id} style={styles.parameterContainer}>
             <Text style={styles.parameterName}>{param.name}</Text>
             <Switch
               value={param.value}
@@ -117,33 +94,24 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
 
       case 'number':
         return (
-          <View 
-            key={param.id} 
-            style={styles.parameterContainer}
-            onTouchStart={handlePress}
-            onTouchMove={handlePress}
-          >
-            <Text style={styles.parameterName}>{param.name}</Text>
-            <View style={styles.numberControl}>
-              <TouchableOpacity
-                style={styles.numberButton}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleValueChange(param.id, param.value - (param.step || 1));
-                }}
-              >
-                <Text style={styles.numberButtonText}>-</Text>
-              </TouchableOpacity>
-              <Text style={styles.numberValue}>{param.value}</Text>
-              <TouchableOpacity
-                style={styles.numberButton}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  handleValueChange(param.id, param.value + (param.step || 1));
-                }}
-              >
-                <Text style={styles.numberButtonText}>+</Text>
-              </TouchableOpacity>
+          <View key={param.id} style={styles.parameterContainer}>
+            <View style={styles.parameterHeader}>
+              <Text style={styles.parameterName}>{param.name}</Text>
+              <View style={styles.numberControl}>
+                <TouchableOpacity
+                  style={styles.numberButton}
+                  onPress={() => handleValueChange(param.id, Math.max((param.min || 0), param.value - (param.step || 1)))}
+                >
+                  <Text style={styles.numberButtonText}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.numberValue}>{param.value}</Text>
+                <TouchableOpacity
+                  style={styles.numberButton}
+                  onPress={() => handleValueChange(param.id, Math.min((param.max || Infinity), param.value + (param.step || 1)))}
+                >
+                  <Text style={styles.numberButtonText}>+</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         );
@@ -154,26 +122,19 @@ const ParameterControls: React.FC<ParameterControlsProps> = ({
   };
 
   return (
-    <View 
-      style={[styles.container, style]}
-      onTouchStart={handlePress}
-      onTouchMove={handlePress}
-    >
-      {parameters.map(renderParameter)}
+    <View style={[styles.container, style]}>
+      {parameters?.map(renderParameter)}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: '4%',
     width: '100%',
   },
   parameterContainer: {
     marginBottom: spacing.lg,
-    width: '100%',
+    paddingHorizontal: spacing.md,
   },
   parameterHeader: {
     flexDirection: 'row',
@@ -185,7 +146,6 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontSize: 16,
     color: colors.text,
-    marginBottom: spacing.xs,
   },
   parameterValue: {
     ...typography.body,
@@ -195,7 +155,6 @@ const styles = StyleSheet.create({
   slider: {
     width: '100%',
     height: 40,
-    marginVertical: spacing.sm,
   },
   selectContainer: {
     flexDirection: 'row',
@@ -224,12 +183,11 @@ const styles = StyleSheet.create({
   numberControl: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
   },
   numberButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: colors.surfaceAlt,
     alignItems: 'center',
     justifyContent: 'center',
@@ -243,7 +201,9 @@ const styles = StyleSheet.create({
     ...typography.body,
     fontSize: 16,
     color: colors.text,
-    marginHorizontal: spacing.lg,
+    marginHorizontal: spacing.md,
+    minWidth: 40,
+    textAlign: 'center',
   },
 });
 
